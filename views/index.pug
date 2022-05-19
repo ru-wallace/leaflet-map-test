@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+  div(id="map")
+  button(type="button"  id="startButton") Select Start
+  button(type="button"  id="destButton") Select Destination
+  button(type="button"  id="calcRoute") Calculate Route
+  button(type="button" id="clearAll") Clear All
+  br
+  div
+    input(type="radio" name="radio" value="mapbox/cycling" id="cycleradio")
+    label(for="cycleradio") Cycle
+  div
+    input(type="radio" name="radio" value="mapbox/walking" id="walkradio" checked="checked")
+    label(for="walkradio") Walk
+  div
+    input(type="radio" name="radio" value="mapbox/driving" id="driveradio")
+    label(for="walkradio") Drive
+  div
+    p(id="pathDisp") pathDrawn: 
+    p(id="routeDisp") routeDrawn: 
+  script(src="javascripts/webmap.js") 
+

@@ -1,0 +1,35 @@
+body {
+  padding: 0px;
+  margin:0px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+html, body, #map {
+	height: 500px;
+	width: 100%;
+}
+
+button {
+  height: 50px;
+  width:fit-content;
+}
+
+#btn1 {
+  display: block;
+}
+
+#calcRoute{
+  display: none;
+}
+
+#calcRoute.show {
+  display:inline;
+}
+
+#clearAll {
+  float:right;
+}
