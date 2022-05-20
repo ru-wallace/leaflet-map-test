@@ -7,10 +7,12 @@ var LRM = require('leaflet-routing-machine');
 var OVP = require('overpass.js');
 var $ = require("jquery");
 var osmtogeojson = require("osmtogeojson");
-var mapBounds;
+
 var isochroneLayer = null;
 var isochronePolygon = null;
 var polyString = "";
+var resultsLayerGroup;
+var resultLayer = null;
 
 //set up markers and path
 var coordA;
@@ -21,8 +23,8 @@ var routeDest;
 var startMarker;
 var destMarker;
 var path;
-let pathDrawn = { a: false };
-let routeDrawn = { a: false };
+/* let pathDrawn = { a: false };
+let routeDrawn = { a: false }; */
 
 // var markerArray = new Array();
 var pathArray = new Array();
@@ -30,6 +32,7 @@ var isSelectingStart = false;
 var isSelectingDest = false;
 var isStartSelected = false;
 var isDestSelected = false;
+var isochroneDrawn = false;
 
 const radioButtons = document.querySelectorAll('input[name="radio"]');
 
@@ -114,11 +117,11 @@ var destButton = document.getElementById("destButton");
 var calcRouteButton = document.getElementById("calcRoute");
 var clearAllButton = document.getElementById("clearAll");
 
-var pathDisp = document.getElementById("pathDisp");
-var routeDisp = document.getElementById("routeDisp");
+/* var pathDisp = document.getElementById("pathDisp");
+var routeDisp = document.getElementById("routeDisp"); */
 
 
-let pathProxy = new Proxy(pathDrawn, {
+/* let pathProxy = new Proxy(pathDrawn, {
 	set(target, name, value) {
 		var pathText = "pathDrawn: " + value;
 		pathDisp.innerText = pathText;
@@ -135,7 +138,7 @@ let routeProxy = new Proxy(routeDrawn, {
 		target[name] = value;
 	}
 });
-
+ */
 
 
 startButton.onclick = function () { startButtonClicked() };
@@ -261,7 +264,7 @@ function routing(pointA, pointB, map) {
 
 	var routeProfile = "mapbox/" + getProfile();
 
-	const options = { profile: selectedProfile };
+	const options = { profile: routeProfile };
 	return L.Routing.control({
 		waypoints: [
 			L.latLng(pointA[0], pointA[1]),
@@ -403,6 +406,17 @@ function clearAll() {
 
 		map.removeLayer(distMarker);
 	}
+	if (isochroneLayer != null){
+		map.removeLayer(isochroneLayer);
+		isochroneLayer = null;
+		isochroneDrawn = false;
+		$("#searchButton").removeClass("show");
+	}
+
+	if (resultLayer != null) {
+		map.removeLayer(resultLayer);
+		resultLayer = null;
+	}
 
 	coordA = null;
 	coordB = null;
@@ -413,10 +427,10 @@ function clearAll() {
 
 
 
-//overpass query
+//
 
 /**
- * 
+ * build string of coords for
  */
 function buildPoly() {
 	polyString = "";
@@ -433,9 +447,9 @@ function buildPoly() {
  * 
  * @param {*} map 
  * @param {*} overpassQuery 
- * @returns 
+ * @returns URL for GET
  */
-function buildOverpassApiUrl(map, overpassQuery) {
+function buildOverpassApiUrl(overpassQuery) {
 	var polyString = buildPoly();
 
 	var nwrQuery = 'nwr[' + overpassQuery + '](poly:"' + polyString + '");';
@@ -448,21 +462,85 @@ function buildOverpassApiUrl(map, overpassQuery) {
 
 
 }
+
+
 /**
  * 
+ * @param {*} filter 
+ * @returns Query for POST
  */
-$("#getSupermarkets").on("click", function () {
+function buildOverpassQuery(filter) {
+	var polyString = buildPoly();
+
+	var nwrQuery = 'nwr[' + filter + '](poly:"' + polyString + '");';
+	var query = '[out:xml][timeout:15];(' + nwrQuery + ');out body geom;';
+	return query;
+}
+
+/**
+ * 
+ * @returns 
+ */
+function buildOverpassFilter() {
+	var key = $("#keyBox").val().trim();
+	var tag = $("#tagBox").val().trim();
+	if (tag == "" ) {
+		return key;
+	} else {
+		var overpassQuery = '"'+key+'"="'+tag+'"';
+		return overpassQuery;
+	}
+	return "";
+}
+
+/**
+ * Overpass API request 
+ */
+$("#searchButton").on("click", function () {
+	search();
+});
+
+var keyBox = $("#keyBox");
+var tagBox = $("#tagBox");
 
 
+/**
+ * Seearch when enter pressed while typing in either search box
+ */
+keyBox.on("keypress", function (e) {
+	if (e.key == "Enter") {	
+	  search();
+	}
+  });
+
+tagBox.on("keypress", function (e) {
+	if (e.key == "Enter") {	
+	  search();
+	}
+  });
+
+
+function search() {
+	if (isochroneDrawn) {
+	var testFilter = buildOverpassFilter();
+	console.log("testFilter: " + testFilter);
+
+	var overpassApiUrl = buildOverpassApiUrl(testFilter);
+	var postQuery = buildOverpassQuery(testFilter);
+
+	var baseUrl = 'http://overpass-api.de/api/interpreter';
+	$.post(baseUrl, postQuery, function(data) {
+		parseOverpassData(data);
+	});
+	} else {
+		console.error("Isochrone Not Drawn");
+	}
+}
+
+
+
+function parseOverpassData(osmDataAsXml) {
 	
-
-
-
-	var testQuery = "shop";
-
-	var overpassApiUrl = buildOverpassApiUrl(map, testQuery);
-
-	$.get(overpassApiUrl, function (osmDataAsXml) {
 		var resultAsGeojson = osmtogeojson(osmDataAsXml);
 
 		var geojsonMarkerOptions = {
@@ -470,8 +548,10 @@ $("#getSupermarkets").on("click", function () {
 			icon: greenIcon
 		};
 
-
-		var resultLayer = L.geoJson(resultAsGeojson, {
+		if (resultLayer != null) {
+			map.removeLayer(resultLayer);
+		}
+		resultLayer = L.geoJson(resultAsGeojson, {
 			pointToLayer: function (feature, latlng) {
 				return L.marker(latlng, { icon: orangeIcon });
 			},
@@ -497,8 +577,11 @@ $("#getSupermarkets").on("click", function () {
 
 			}
 		}).addTo(map);
-	});
-});
+
+
+	
+}
+
 
 var polyTest = { "features": [{ "properties": { "fill": "#bf4040", "fillOpacity": 1, "fillColor": "#bf4040", "contour": 400, "opacity": 1, "metric": "distance" }, "geometry": { "coordinates": [[[55.832625, -4.336639], [55.831354, -4.336911], [55.831479, -4.339765], [55.830914, -4.339911], [55.831294, -4.340242], [55.831625, -4.340258], [55.831933, -4.339219], [55.832729, -4.339014], [55.833048, -4.338333], [55.833625, -4.338119], [55.834374, -4.338162], [55.834625, -4.339002], [55.83555, -4.338911], [55.834796, -4.33874], [55.834701, -4.337835], [55.833108, -4.337428], [55.832625, -4.336639]]], "type": "Polygon" }, "type": "Feature" }], "type": "FeatureCollection" }
 
@@ -513,10 +596,19 @@ $("#getIsochrone").on("click", function () {
 	var baseUrl = "https://api.mapbox.com/isochrone/v1/mapbox/";
 
 	var profile = getProfile();
-	var contours = "contours_minutes=5";
+	var time = parseFloat($("#timeBox").val().trim());
+	time = Math.round(time);
+	$("#timeBox").val(time);
+	var contours = "contours_minutes=" + time;
 	var polygons = "polygons=true";
-	var denoise = "denoise=0";
-	var generalise = "generalize=0";
+	var denoiseVal = 0;
+	var generaliseVal = 0;
+	if (time >=16) {
+		denoiseVal = 1;
+		generaliseVal = 1;
+	}
+	var denoise = "denoise=" + denoiseVal;
+	var generalise = "generalize="+ generaliseVal;
 	var accessToken = "pk.eyJ1IjoicndhbGwwMTA1IiwiYSI6ImNqa3I2ZDQ4NzNmdmMzcXBqZ21hdnYzcWEifQ.QgejQortYMSdX-leJ3SMWw";
 	var accessTokenString = "access_token=" + accessToken;
 
@@ -543,6 +635,9 @@ $("#getIsochrone").on("click", function () {
 				console.log(isochronePolygon);
 			}
 		}).addTo(map);
+		isochroneDrawn = true;
+		$("#searchButton").addClass("show");
+
 	});
 });
 
@@ -566,6 +661,77 @@ function getProfile() {
 	}
 }
 
+$("#getUrbanityButton").on("click", function() {
+	urbanityRequest();
+})
+
+function urbanityRequest() {
+
+isochroneRequest();
+
+}
+
+function calculateWalkability(data) {
+
+}
+
+
+function isochroneRequest() {
+
+	//create query
+	var isoQuery = createUrbanityIsochroneQuery();
+	console.log("Urbanity isoQuery: ");
+	console.log(isoQuery);
+
+	$.get(isoQuery, function (isochroneJSON) {
+		if (isochroneLayer != null) {
+			map.removeLayer(isochroneLayer);
+		}
+
+
+		isochroneLayer = L.geoJSON(isochroneJSON, {
+
+			onEachFeature: function(feature, layer) {
+				isochronePolygon = feature.geometry.coordinates[0];
+				console.log("isochronePolygon");
+				console.log(isochronePolygon);
+			}
+		}).addTo(map);
+	});
+
+
+
+}
+/**
+ * 
+ * @returns {String[]} isoQuery: 4 isochrone query strings to be sent to mapbox
+ */
+function createUrbanityIsochroneQuery() {
+		/**
+	 * create url request
+	 */
+		 var baseUrl = "https://api.mapbox.com/isochrone/v1/mapbox/";
+
+		 var profile = "walking";
+		var contoursVals = [5,10,15,20];
+		 var contours = "contours_minutes=5,10,15,20";
+		 var polygons = "polygons=true";
+		 var colours = 'contours_colors=';
+		 var denoiseVal = 0.5;
+		 var generaliseVal = 0.5;
+
+		 var denoise = "denoise=" + denoiseVal;
+		 var generalise = "generalize="+ generaliseVal;
+		 var accessToken = "pk.eyJ1IjoicndhbGwwMTA1IiwiYSI6ImNqa3I2ZDQ4NzNmdmMzcXBqZ21hdnYzcWEifQ.QgejQortYMSdX-leJ3SMWw";
+		 var accessTokenString = "access_token=" + accessToken;
+
+		 var isoRequest;
+		 //for (let i=0; i<5; i++) {
+		 isoRequest = baseUrl + profile + "/" + coordA[1].toFixed(3) + "%2C" + coordA[0].toFixed(3) + "?" + contours + "&" + polygons + "&" + denoise + "&" + generalise + "&" + accessTokenString;
+		 //}
+
+		 return isoRequest;
+}
 },{"jquery":4,"leaflet":6,"leaflet-routing-machine":5,"osmtogeojson":10,"overpass.js":13}],2:[function(require,module,exports){
 var wgs84 = require('wgs84');
 

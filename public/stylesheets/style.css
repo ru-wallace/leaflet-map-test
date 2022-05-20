@@ -18,6 +18,14 @@ button {
   width:fit-content;
 }
 
+button.searchButton {
+  height: auto;
+  display:none;
+}
+#searchButton.show {
+  display: inline;
+}
+
 #btn1 {
   display: block;
 }
@@ -26,6 +34,8 @@ button {
   display: none;
 }
 
+
+
 #calcRoute.show {
   display:inline;
 }
@@ -33,8 +43,16 @@ button {
 #getSupermarkets {
   float:right;
 }
+
+#getUrbanityButton {
+  float:right;
+}
 #clearAll {
   float:right;
+}
+
+#profile_container {
+  width:200px;
 }
 
 

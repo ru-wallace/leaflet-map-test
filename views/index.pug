@@ -8,22 +8,34 @@ block content
   button(type="button"  id="destButton") Select Destination
   button(type="button"  id="calcRoute") Calculate Route
 
-  button(type="button" id="getSupermarkets") Get Supermarkets
+ 
+  button(type="button" id="getUrbanityButton") Calculate Urbanity
   button(type="button" id="clearAll") Clear All
   button(type="button" id="getIsochrone") get Isochrone
   br
   div
-    input(type="radio" name="radio" value="cycling" id="cycleradio")
-    label(for="cycleradio") Cycle
-  div
-    input(type="radio" name="radio" value="walking" id="walkradio" checked="checked")
-    label(for="walkradio") Walk
-  div
-    input(type="radio" name="radio" value="driving" id="driveradio")
-    label(for="walkradio") Drive
-  div
-    p(id="pathDisp") pathDrawn: 
-    p(id="routeDisp") routeDrawn: 
+    div(id="profile_container")
+      div
+        input(type="radio" name="radio" value="cycling" id="cycleradio")
+        label(for="cycleradio") Cycle
+      div
+        input(type="radio" name="radio" value="walking" id="walkradio" checked="checked")
+        label(for="walkradio") Walk
+      div
+        input(type="radio" name="radio" value="driving" id="driveradio")
+        label(for="walkradio") Drive
+    div 
+      label(for="timeBox") Time 
+      input(type="text" id="timeBox" name="timeBox" value="20")
+  br
+
+  div 
+    label(for="keyBox") OSM Key
+    input(type="text" id="keyBox" name="keyBox" value="shop")
+    label(for="tagBox") OSM Tag
+    input(type="text" id="tagBox" name="tagBox")
+    button(type="button" id="searchButton" class="searchButton") Search Area
+
 
   script(src="javascripts/webmap.js")
 
