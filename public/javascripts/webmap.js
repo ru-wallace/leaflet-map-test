@@ -9,6 +9,8 @@ var $ = require("jquery");
 var osmtogeojson = require("osmtogeojson");
 var mapBounds;
 var isochroneLayer = null;
+var isochronePolygon = null;
+var polyString = "";
 
 //set up markers and path
 var coordA;
@@ -409,28 +411,22 @@ function clearAll() {
 
 }
 
-//find box 1000m x 1000m around coords (roughly)
-/**
- * 
- * @param {*} coordinates 
- * @returns 
- */
-function getBox(coordinates) {
-	var lat = coordinates[0];
-	var lng = coordinates[1];
-	var latMin = lat - 0.01;
-	var latMax = lat + 0.01;
-
-	var lngMin = lng - 0.01;
-	var lngMax = lng + 0.01;
-
-	var box = latMin + "," + lngMin + "," + latMax + "," + lngMax;
-	console.log("box: " + box);
-	return box;
-}
 
 
 //overpass query
+
+/**
+ * 
+ */
+function buildPoly() {
+	polyString = "";
+	console.log(isochronePolygon);
+	
+	for (let coord of isochronePolygon) {
+		polyString = polyString + coord[1] + " " + coord[0] + " ";
+	  }
+	  return polyString.trim();
+}
 
 
 /**
@@ -440,16 +436,14 @@ function getBox(coordinates) {
  * @returns 
  */
 function buildOverpassApiUrl(map, overpassQuery) {
-	var startPointBounds = getBox(coordA);
-	var aroundString = "around:400, " + coordA[0] + "," + coordA[1];
-	var mapBounds = map.getBounds().getSouth() + ',' + map.getBounds().getWest() + ',' + map.getBounds().getNorth() + ',' + map.getBounds().getEast();
-	console.log("mapBounds: " + mapBounds);
-	var nodeQuery = 'node[' + overpassQuery + '](' + aroundString + ');';
-	var wayQuery = 'way[' + overpassQuery + '](' + aroundString + ');';
-	var relationQuery = 'relation[' + overpassQuery + '](' + aroundString + ');';
-	var query = '?data=[out:xml][timeout:15];(' + nodeQuery + wayQuery + relationQuery + ');out body geom;';
+	var polyString = buildPoly();
+
+	var nwrQuery = 'nwr[' + overpassQuery + '](poly:"' + polyString + '");';
+
+	var query = '?data=[out:xml][timeout:15];(' + nwrQuery + ');out body geom;';
 	var baseUrl = 'http://overpass-api.de/api/interpreter';
 	var resultUrl = baseUrl + query;
+
 	return resultUrl;
 
 
@@ -460,7 +454,7 @@ function buildOverpassApiUrl(map, overpassQuery) {
 $("#getSupermarkets").on("click", function () {
 
 
-	console.log("sending ovpQuery");
+	
 
 
 
@@ -513,12 +507,13 @@ var polyTest = { "features": [{ "properties": { "fill": "#bf4040", "fillOpacity"
  */
 $("#getIsochrone").on("click", function () {
 
-
-	//create url request
+	/**
+	 * create url request
+	 */
 	var baseUrl = "https://api.mapbox.com/isochrone/v1/mapbox/";
 
 	var profile = getProfile();
-	var contours = "contours_minutes=20";
+	var contours = "contours_minutes=5";
 	var polygons = "polygons=true";
 	var denoise = "denoise=0";
 	var generalise = "generalize=0";
@@ -539,7 +534,15 @@ $("#getIsochrone").on("click", function () {
 			map.removeLayer(isochroneLayer);
 		}
 
-		isochroneLayer = L.geoJSON(isochroneJSON).addTo(map);
+
+		isochroneLayer = L.geoJSON(isochroneJSON, {
+
+			onEachFeature: function(feature, layer) {
+				isochronePolygon = feature.geometry.coordinates[0];
+				console.log("isochronePolygon");
+				console.log(isochronePolygon);
+			}
+		}).addTo(map);
 	});
 });
 
@@ -563,8 +566,6 @@ function getProfile() {
 	}
 }
 
-//test end
-//test 2
 },{"jquery":4,"leaflet":6,"leaflet-routing-machine":5,"osmtogeojson":10,"overpass.js":13}],2:[function(require,module,exports){
 var wgs84 = require('wgs84');
 
