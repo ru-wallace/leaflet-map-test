@@ -7,19 +7,23 @@ block content
   button(type="button"  id="startButton") Select Start
   button(type="button"  id="destButton") Select Destination
   button(type="button"  id="calcRoute") Calculate Route
+
+  button(type="button" id="getSupermarkets") Get Supermarkets
   button(type="button" id="clearAll") Clear All
+  button(type="button" id="getIsochrone") get Isochrone
   br
   div
-    input(type="radio" name="radio" value="mapbox/cycling" id="cycleradio")
+    input(type="radio" name="radio" value="cycling" id="cycleradio")
     label(for="cycleradio") Cycle
   div
-    input(type="radio" name="radio" value="mapbox/walking" id="walkradio" checked="checked")
+    input(type="radio" name="radio" value="walking" id="walkradio" checked="checked")
     label(for="walkradio") Walk
   div
-    input(type="radio" name="radio" value="mapbox/driving" id="driveradio")
+    input(type="radio" name="radio" value="driving" id="driveradio")
     label(for="walkradio") Drive
   div
     p(id="pathDisp") pathDrawn: 
     p(id="routeDisp") routeDrawn: 
-  script(src="javascripts/webmap.js") 
+
+  script(src="javascripts/webmap.js")
 

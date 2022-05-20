@@ -6,7 +6,7 @@
     "start-dev": "nodemon app.js",
     "start": "node ./bin/www",
     "build": "npm run setup-js",
-    "watch": "nodemon --exec \"npm run build && node ./bin/www\" -e js --ignore public/javascripts",
+    "watch": "nodemon --exec \"npm run build && node ./bin/www\" --ignore public/javascripts",
     "setup-js": "browserify lib/webmap.js -o public/javascripts/webmap.js",
     "setup-css": "cp node_modules/leaflet/dist/leaflet.css public/stylesheets/leaflet.css"
   },
@@ -16,9 +16,11 @@
     "eslint": "^8.15.0",
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
+    "jquery": "^3.6.0",
     "leaflet": "^1.8.0",
     "leaflet-routing-machine": "^3.2.12",
     "morgan": "~1.9.1",
+    "osmtogeojson": "^3.0.0-beta.4",
     "overpass.js": "^1.0.0",
     "pug": "2.0.0-beta11"
   },

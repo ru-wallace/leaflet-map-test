@@ -30,6 +30,11 @@ button {
   display:inline;
 }
 
+#getSupermarkets {
+  float:right;
+}
 #clearAll {
   float:right;
 }
+
+
